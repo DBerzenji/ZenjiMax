@@ -1,0 +1,75 @@
+[X] Ensure balance of expenses and sinking funds increase by remaining allocation after the month is over as we move to the next month (also allow the balance to go into the negative). - this can be done by the shift to transactions for sinking fund allocation 
+[X] Actually, let the allocated dollar amount in a sinking fund be a transaction applied to that sinking fund therefore affecting the balance, and let them be connected so editing the allocated dollar amount will edit the transaction editing the transaction would edit the allocation amount, and the same goes for deleting the transaction or sinking fund.
+[X] Sync the month selector between all pages.
+[X] When I click on a transaction in the pie chart, take me to the transaction on the transaction page.
+[X] When clicking on a transaction under it's Category, let me edit the transaction
+[X] Let editing transaction in the Category viewer edit or delete that category's Allocation in Transactions - there is a bug where editing an allocation's transaction, then changing that cateogry's allocation, keeps both the original edited one and the new allocation causing 2 allocation transactions to be applied.
+[X] The category legend under the distribution overview gets cutoff because the panel is too short, can you make sure the categories don't get cut off even when I have many-many categories listed under the pie chart.
+[X] Include Outflow transactions from Savings/Sinking Funds in the Distribution Overview (but make sure it can be filtered out) 
+[X] Make Distribution Overview extremely easy to switch between normal spending, and Sinking fund spending. By default, present normal spending only.
+[X] Fix filtering certain categories on Distribution Overview (currently we get some JS errors when trying to filter categories in or out)
+[X] Category filtering still doesn't work when clicking on them individually
+[X] Make Sinking fund spending fall under the "Normal Spending" dropdown filter; I only want "(Saved)" transactions listed under the  "Sinking Funds" drowndown filter.
+[X] Fix "txn linked" and "no txn yet" text
+[X] Change "No spending or savings found for this month." when no transactions are available for the pie chart
+[X] Fix the CSV Template under Import, it doesn't match the same format as when I export and import a CSV.
+[X] Simplify and remove the redundancy for sinking fund "$/month" and "Monthly Allocation: $ Transaction linked", one or the other only.
+[X] Make the Sinking Fund Balances more visible.
+[X] Update Distribution Overview text for Sinking Withdrawals where the category section has (Withdrawal) appended but after clicking it changes to (Spent).
+[X] Have solutions for deployment to all devices (web-based?)
+[X] Consider hiding Allocation transactions from the transaction view
+[X] Make text higher contrast from background
+[X] Look into removing Spent this Month and Left to Spend, the first is redundant with Summaries under category sections the latter is irrelevant.
+[X] Look into making "view by" more hidden, it doesn't need that prime real estate, people set it once and forget it.
+[X] Add bi-monthky as a time scale.
+[X] Add functionality to create transaction directly on a category, automatically assigning it there. (this might end up replacing the transaction tab)
+[X] Remove the underline from the date field indicating it's clickable.
+[X] Update Div.Toast to be accurate with variety of time-scales
+[X] MAJOR bug, editing the allocation transaction's amount and then editing the allocation directly from the cateogry de-synces the original transaction.
+[X] Remove Current Balance option on Expense Category creation - just like Income.
+[X] Make Sinking Fund starting balance an invisible transaction - likely how we'll handle the monthly allocation transacitons. That way going forward the starting 
+[X] Time scale (daily, weekly, bi-weekly, semi-monthly, monthly, annual) adjusts the date scrolling back and forth and the balance of money remaining in each category.
+[X] Get PWA working on Android.
+[X] Increase the scale of most things to be more mobile device friendly. - better yet, let the user customize the scale.
+[X] MAJOR bug time-scale on category allocation transaction is still deposited monthly, adjust!
+[X] Changing the sinking fund allocation time-scale doesn't update the sinking fund's balance.
+[X] MAJOR BUG, If my time-scale view is bi-weekly, but I set a sinking fund's allcoation to be 500/monthly, that 500 will be deposited/transacted into the balance of that sinking fund increasing it by 500, but I actually want it to increase by the allocation's timescale adjusted to my view's timescale, so 500/monthly allocation would be roughly $250/bi-weekly on my view; and this should automatically adjust when I change my time-scale view to other options.
+[X] Don't carry over allocation values backwards. - Don't overwrite any values/amounts/allocations.
+[X] When advancing to a new time-period prompt the user if they want to copy over the last budget, or start again blank.
+[X] Update "budget allocation (for selected month)" to be for the time-scale.
+[X] Adjust prog.notes from the Sinking Fund that incorrectly states that period's expense and contributions; it doesn't consider the set allocation, which should be 
+[X] Move "view by" to bottom of each page (actually moved to inside date picker).
+[X] Fix: Make pie chart mobile-navigable (e.g., tap for value, double-tap to open). - SEXY AF
+[X] Remove "Toggle All" button on Distribution Overview page.
+[X] Rename "Left to Spend" to "Spent".
+[X] Move "Import"/"Export" buttons to accomodate "left to spend"
+[X] Move "Left to Spend" to top banner next to "Unassigned".
+[X] Remove "This Month" (with money sum) under date picker.
+[X] Remove "Quick Add Transaction" button on Income categories.
+[X] Fix: Let delete notification text-wrap to prevent overflow.
+[X] Centre the 3 navigation tabs
+[X] Centre the Income, Unassigned, Spent figures
+[X] Rename "Normal Spending" to <Time-Scale> "Spending" (Distribution Overview).
+[X] Rename "Sinking ..." to "Saving ..." (Distribution Overview).
+[X] Rename "Spending" tab to "Overview".
+[X] Add semi-monthly dropdown option to Category creation.
+[X] Add delete button to transactions under category view.
+[X] Set the default value of category time-scale to match current user selection.
+[X] Fix: Balance field logic for Sinking Funds (only set on creation; hide field entirely when uneditable).
+[X] Fix: Ensurethe Toast Notification on for transactions on Sinking Funds are showing the accurate Balance a no other numbers like the Transaction Amount.
+[X] Group transactions with matching names in Overview pie chart.
+[X] Look into making the tabs to switch between budget, transaction, and overview sticky to the top even when I scroll down - Looked into, it's a no because mobile doesn't like it.
+[X] Make sure piechart can accommodate endless categories.
+[X] Look into removing transaction page and instead just having transactions under their categories? - Nah
+[X] Investigate but where $0 left in category after perfectly suming transactions makes the text red indicating i went over budget, even though its at $0, this doesnt always happen. - As expected, a rounding error, brought it back to hundreth decimal place.
+
+
+[] Review Claude's bug and redundancy search - high scrutiny 
+[] Make complete list of functions/features expectations to run through when testing the app - make sure nothing gets overlooked.
+[] Optimize the code a lot, sloppy stuff.
+[] Make the initial budget's data the same as what's in the template
+[] Add recurring expenses with due dates.
+[] Add a "Clear Budget" button, that can clear just Transactions or all Categories and Transactions.
+[] BIG FORK: "ZenjiMax" starts as ZenjiMini but there's a hamburger menu to enable and disable various "tabs" to go alongside "budget, transactions, overview" and those tabs will include things like FI calculation/forcast, Assets & Debts, Debt payoff ammorizations and scenarios, Networth calculation and projection, etc...
+[] Fux tab cut-off and inability to scroll all the way - still cutoff Street scrolling. 
+[] make all net worth and fire data export and import capable
