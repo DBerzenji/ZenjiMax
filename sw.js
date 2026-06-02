@@ -1,6 +1,6 @@
 console.log('SW FILE LOADED');
 
-const CACHE_NAME = 'zenji-cache-v1';
+const CACHE_NAME = 'ZenjiMax-cache-v1';
 
 const ASSETS_TO_CACHE = [
   './',
