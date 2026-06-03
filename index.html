@@ -1662,7 +1662,7 @@
                 <div id="mod-fi-metrics" class="fi-metrics-grid"
                     style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; margin-top: 14px;">
                     <div class="card" style="padding: 12px; text-align: center; margin-bottom: 0;">
-                        <div class="hstat-label" style="font-size: 0.65rem; letter-spacing: 0.8px;">Nest Egg</div>
+                        <div class="hstat-label" style="font-size: 0.65rem; letter-spacing: 0.8px;">Net Worth</div>
                         <div class="hstat-val" id="fi-val-nest-egg"
                             style="font-size: 1.15rem; color: var(--accent); margin-top: 4px;">$0</div>
                     </div>
@@ -1706,7 +1706,7 @@
 
                     <div class="input-row" style="margin-bottom: 8px;">
                         <div>
-                            <label class="field-label">Current Nest Egg ($)</label>
+                            <label class="field-label">Current Net Worth ($)</label>
                             <input type="number" id="fi-input-nest-egg" value="10000" step="1000"
                                 oninput="onFIParamChange()">
                         </div>
@@ -1848,7 +1848,7 @@
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <span>Projection Settings</span>
                         <span class="nw-sync-badge" onclick="syncNWToFI()"
-                            title="Use current Net Worth as FIRE Nest Egg">⟳
+                            title="Use current Net Worth as FIRE Net Worth">⟳
                             Sync to FIRE</span>
                     </div>
                     <div class="nw-controls-row">
@@ -4353,7 +4353,7 @@
                 {
                     name: 'Coast FIRE',
                     target: coastFIRETargetCurrent,
-                    desc: `Nest egg grows to traditional FIRE by age ${targetAge} without further savings contributions.`,
+                    desc: `Net worth grows to traditional FIRE by age ${targetAge} without further savings contributions.`,
                     key: 'coast'
                 },
                 {
@@ -4835,7 +4835,7 @@
 
             state.fi.nestEgg = Math.round(currentNW);
             save();
-            showToast(`Nest egg updated to ${fmt(currentNW)}.`, 'var(--income)');
+            showToast(`Net worth updated to ${fmt(currentNW)}.`, 'var(--income)');
 
             const nestEggInput = document.getElementById('fi-input-nest-egg');
             if (nestEggInput) {
