@@ -2857,18 +2857,25 @@ function toggleTxnNote(id) {
             return !state.categories.some(c => c.allocations && c.allocations[key] !== undefined);
         }
 
-        function copyBudget(fromY, fromM, toY, toM) {
-            const fromKey = monthKey(fromY, fromM);
-            const toKey = monthKey(toY, toM);
-            state.categories.forEach(c => {
-                if (c.allocations && c.allocations[fromKey] !== undefined) {
-                    c.allocations[toKey] = c.allocations[fromKey];
-                }
-            });
-            save();
-            render();
-            showToast('Budget copied.', 'var(--accent)');
+        function copyBudget(fromY, fromM, toY, toM, copyPrevious = true) {
+    const fromKey = monthKey(fromY, fromM);
+    const toKey = monthKey(toY, toM);
+    state.categories.forEach(c => {
+        if (copyPrevious) {
+            if (c.allocations && c.allocations[fromKey] !== undefined) {
+                c.allocations[toKey] = c.allocations[fromKey];
+            }
+        } else {
+            if (c.type !== 'income') {
+                if (!c.allocations) c.allocations = {};
+                c.allocations[toKey] = 0;
+            }
         }
+    });
+    save();
+    render();
+    showToast(copyPrevious ? 'Budget allocations copied.' : 'Allocations initialized to zero (except Income).', 'var(--accent)');
+}
 
         function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
@@ -2915,28 +2922,28 @@ function toggleTxnNote(id) {
             }
         }
 
-        function showConfirmToast(msg, onConfirm) {
-            const el = document.getElementById('toast');
-            clearTimeout(toastTimer);
-            el.className = 'toast-confirm';
-            el.innerHTML = '';
-            el.style.background = 'var(--danger)';
-            el.style.display = 'flex';
-            const span = document.createElement('span');
-            span.className = 'toast-msg';
-            span.textContent = msg;
-            el.appendChild(span);
-            const btnYes = document.createElement('button');
-            btnYes.textContent = 'Yes';
-            btnYes.style.cssText = 'background:#fff; color:var(--danger); border:none; border-radius:4px; padding:2px 10px; cursor:pointer; font-weight:700; flex-shrink:0;';
-            btnYes.onclick = e => { e.stopPropagation(); el.style.display = 'none'; onConfirm(); };
-            const btnNo = document.createElement('button');
-            btnNo.textContent = 'No';
-            btnNo.style.cssText = 'background:transparent; color:#fff; border:1px solid #fff; border-radius:4px; padding:2px 10px; cursor:pointer; flex-shrink:0;';
-            btnNo.onclick = e => { e.stopPropagation(); el.style.display = 'none'; };
-            el.appendChild(btnYes);
-            el.appendChild(btnNo);
-        }
+        function showConfirmToast(msg, onConfirm, onCancel) {
+    const el = document.getElementById('toast');
+    clearTimeout(toastTimer);
+    el.className = 'toast-confirm';
+    el.innerHTML = '';
+    el.style.background = 'var(--danger)';
+    el.style.display = 'flex';
+    const span = document.createElement('span');
+    span.className = 'toast-msg';
+    span.textContent = msg;
+    el.appendChild(span);
+    const btnYes = document.createElement('button');
+    btnYes.textContent = 'Yes';
+    btnYes.style.cssText = 'background:#fff; color:var(--danger); border:none; border-radius:4px; padding:2px 10px; cursor:pointer; font-weight:700; flex-shrink:0;';
+    btnYes.onclick = e => { e.stopPropagation(); el.style.display = 'none'; onConfirm(); };
+    const btnNo = document.createElement('button');
+    btnNo.textContent = 'No';
+    btnNo.style.cssText = 'background:transparent; color:#fff; border:1px solid #fff; border-radius:4px; padding:2px 10px; cursor:pointer; flex-shrink:0;';
+    btnNo.onclick = e => { e.stopPropagation(); el.style.display = 'none'; if (onCancel) onCancel(); };
+    el.appendChild(btnYes);
+    el.appendChild(btnNo);
+}
 
         // ─── TABS ────────────────────────────────────────────────────────────
         function switchTab(id, btn) {
@@ -2975,8 +2982,12 @@ function toggleTxnNote(id) {
     currentPeriodStart = stepPeriodStart(delta, ts);
     syncLegacyMonth();
 
-    if (isMonthBlank(currentYear, currentMonth) && !isMonthBlank(oldY, oldM)) {
-        showConfirmToast('Copy previous budget allocations?', () => copyBudget(oldY, oldM, currentYear, currentMonth));
+    if (delta > 0 && isMonthBlank(currentYear, currentMonth) && !isMonthBlank(oldY, oldM)) {
+        showConfirmToast(
+            'Copy previous budget allocations?', 
+            () => copyBudget(oldY, oldM, currentYear, currentMonth, true),
+            () => copyBudget(oldY, oldM, currentYear, currentMonth, false)
+        );
     }
 
     chartActiveCategoryId = null;
@@ -3037,21 +3048,27 @@ function toggleTxnNote(id) {
         }
 
         function applyDatePicker() {
-            const val = document.getElementById('date-picker-input').value;
-            if (!val) return;
-            const parts = val.split('-');
-            if (parts.length !== 3) return;
+    const val = document.getElementById('date-picker-input').value;
+    if (!val) return;
+    const parts = val.split('-');
+    if (parts.length !== 3) return;
 
-            const oldY = currentYear, oldM = currentMonth;
-            currentPeriodStart = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-            currentPeriodStart = snapPeriodStart(getTimescale());
-            syncLegacyMonth();
+    const oldY = currentYear, oldM = currentMonth;
+    const oldDate = new Date(currentPeriodStart.getTime());
+    currentPeriodStart = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    currentPeriodStart = snapPeriodStart(getTimescale());
+    syncLegacyMonth();
 
-            if (isMonthBlank(currentYear, currentMonth) && !isMonthBlank(oldY, oldM)) {
-                showConfirmToast('Copy previous budget allocations?', () => copyBudget(oldY, oldM, currentYear, currentMonth));
-            }
+    const isForward = currentPeriodStart > oldDate;
+    if (isForward && isMonthBlank(currentYear, currentMonth) && !isMonthBlank(oldY, oldM)) {
+        showConfirmToast(
+            'Copy previous budget allocations?', 
+            () => copyBudget(oldY, oldM, currentYear, currentMonth, true),
+            () => copyBudget(oldY, oldM, currentYear, currentMonth, false)
+        );
+    }
 
-            chartActiveCategoryId = null;
+    chartActiveCategoryId = null;
             chartActiveCategoryFlow = null;
             chartActiveGroupIds = null;
             chartActiveGroupLabel = null;
