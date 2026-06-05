@@ -52,58 +52,63 @@
         }
 
         /* ── HEADER ──────────────────────────────────── */
-        .app-header {
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            padding: 0 12px;
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            gap: 10px;
-            height: 56px;
-            position: sticky;
-            top: 0;
-            z-index: 200;
-            box-shadow: 0 1px 8px rgba(40, 60, 45, 0.06);
-        }
+.app-header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 12px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 10px;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    box-shadow: 0 1px 8px rgba(40, 60, 45, 0.06);
+}
 
-        .app-logo {
-            font-family: 'DM Serif Display', serif;
-            font-size: 1.35rem;
-            color: var(--accent);
-            letter-spacing: -0.3px;
-            justify-self: start;
-            flex-shrink: 0;
-            white-space: nowrap;
-        }
+.app-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.35rem;
+    color: var(--accent);
+    letter-spacing: -0.3px;
+    justify-self: start;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
 
-        .header-stats {
-            grid-column: 2;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            justify-self: center;
-        }
+.header-stats {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    justify-self: center;
+}
 
-        .hstat {
-            text-align: center;
-            padding: 0 2px;
-        }
+.hstat {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 65px;
+}
 
-        .hstat-label {
-            font-size: 0.60rem;
-            text-transform: uppercase;
-            letter-spacing: 0.9px;
-            color: var(--text2);
-            font-weight: 700;
-            line-height: 1.2;
-        }
+.hstat-label {
+    font-size: 0.60rem;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    color: var(--text2);
+    font-weight: 700;
+    line-height: 1.2;
+}
 
-        .hstat-val {
-            font-size: 0.95rem;
-            font-weight: 700;
-            line-height: 1.3;
-        }
+.hstat-val {
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
 
         .header-actions {
             grid-column: 3;
@@ -1384,23 +1389,28 @@
         }
 
         @media (max-width: 480px) {
-            .tab-btns {
-                justify-content: flex-start;
-            }
+    .tab-btns {
+        justify-content: flex-start;
+    }
 
-            .hstat-val {
-                font-size: 0.8rem;
-            }
+    .hstat-val {
+        font-size: 0.9rem;
+        font-weight: 800;
+    }
 
-            .hstat-label {
-                font-size: 0.6rem;
-                letter-spacing: 0.9px;
-            }
+    .hstat-label {
+        font-size: 0.58rem;
+        letter-spacing: 0.6px;
+    }
 
-            .header-stats {
-                gap: 2px;
-            }
-        }
+    .header-stats {
+        gap: 8px;
+    }
+    
+    .hstat {
+        min-width: 55px;
+    }
+}
     </style>
 </head>
 
@@ -1595,8 +1605,8 @@
                 <div id="mod-txn-logger">
                     <div class="form-card" style="margin-top:14px;">
                         <div class="form-title">Log a Transaction</div>
-                        <input type="text" id="txn-desc" placeholder="Description (e.g. Safeway run)">
-                        <div class="input-row" style="margin-bottom:8px;">
+<input type="text" id="txn-desc" placeholder="Description (e.g. Safeway run)">
+<div class="input-row" style="margin-bottom:8px;">
                             <select id="txn-cat"></select>
                             <select id="txn-flow">
                                 <option value="outflow">Outflow (–)</option>
@@ -1607,6 +1617,7 @@
                             <input type="number" id="txn-amt" placeholder="Amount ($)" step="0.01" min="0">
                             <input type="date" id="txn-date">
                         </div>
+<input type="text" id="txn-note" placeholder="Notes (optional)">
                         <button class="btn-primary" onclick="addTransaction()">Log Transaction</button>
                     </div>
                 </div>
@@ -1993,12 +2004,12 @@
     </div>
 
     <div class="modal-bg" id="txn-modal" onclick="if(event.target===this)closeTxnModal()">
-        <div class="modal-box">
-            <div class="modal-handle"></div>
-            <div class="modal-title">Edit Transaction</div>
-            <input type="hidden" id="txn-edit-id">
-            <label class="field-label">Description</label>
-            <input type="text" id="txn-edit-desc">
+    <div class="modal-box">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Edit Transaction</div>
+        <input type="hidden" id="txn-edit-id">
+        <label class="field-label">Description</label>
+        <input type="text" id="txn-edit-desc">
             <label class="field-label">Category</label>
             <select id="txn-edit-cat"></select>
             <div class="input-row" style="margin-bottom:8px;">
@@ -2016,6 +2027,8 @@
             </div>
             <label class="field-label">Date</label>
             <input type="date" id="txn-edit-date">
+            <label class="field-label">Notes</label>
+        <input type="text" id="txn-edit-note" placeholder="Notes (optional)">
             <div class="modal-actions">
                 <button class="btn-primary secondary" onclick="closeTxnModal()">Cancel</button>
                 <button class="btn-primary" onclick="saveEditTransaction()">Save Changes</button>
@@ -2098,39 +2111,48 @@
         }
         //PIN HERE
 
-        // ─── MISSING HELPERS ──────────────────────────────────────────────────
+// Helper to check if tab is dashboard
+function isDashboardTab(tabId) {
+    const t = state.tabs?.find(x => x.id === tabId);
+    return t && t.type === 'dashboard';
+}
 
-        function saveTabDateState(tabId) {
-            if (!tabId) return;
-            if (!state.tabDates) state.tabDates = {};
-            state.tabDates[tabId] = {
-                periodStartISO: isoDate(currentPeriodStart),
-                ts: getTimescale()
-            };
-            save();
-        }
+function saveTabDateState(tabId) {
+    if (!tabId) return;
+    if (!state.tabDates) state.tabDates = {};
+    const data = {
+        periodStartISO: isoDate(currentPeriodStart),
+        ts: getTimescale()
+    };
+    if (isDashboardTab(tabId)) {
+        state.tabDates[tabId] = data;
+    } else {
+        state.sharedPeriod = data;
+    }
+    save();
+}
 
-        function restoreTabDateState(tabId) {
-            if (!tabId) return;
-            if (!state.tabDates) state.tabDates = {};
-            const saved = state.tabDates[tabId];
-            if (saved) {
-                const parts = saved.periodStartISO.split('-');
-                currentPeriodStart = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                const tsEl = document.getElementById('budget-ts');
-                if (tsEl) {
-                    tsEl.value = saved.ts || 'monthly';
-                }
-            } else {
-                const d = new Date();
-                currentPeriodStart = new Date(d.getFullYear(), d.getMonth(), 1);
-                const tsEl = document.getElementById('budget-ts');
-                if (tsEl) {
-                    tsEl.value = 'monthly';
-                }
-            }
-            syncLegacyMonth();
+function restoreTabDateState(tabId) {
+    if (!tabId) return;
+    if (!state.tabDates) state.tabDates = {};
+    const saved = isDashboardTab(tabId) ? state.tabDates[tabId] : state.sharedPeriod;
+    if (saved) {
+        const parts = saved.periodStartISO.split('-');
+        currentPeriodStart = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        const tsEl = document.getElementById('budget-ts');
+        if (tsEl) {
+            tsEl.value = saved.ts || 'monthly';
         }
+    } else {
+        const d = new Date();
+        currentPeriodStart = new Date(d.getFullYear(), d.getMonth(), 1);
+        const tsEl = document.getElementById('budget-ts');
+        if (tsEl) {
+            tsEl.value = 'monthly';
+        }
+    }
+    syncLegacyMonth();
+}
 
         function renderFIPensionsList() {
             const container = document.getElementById('fi-pensions-list');
@@ -2401,6 +2423,13 @@
         let lastTimescale = 'monthly';
         let anchorMonth = TODAY.getMonth();
         const openCatPanels = new Set();
+const openTxnNotes = new Set();
+
+function toggleTxnNote(id) {
+    if (openTxnNotes.has(id)) openTxnNotes.delete(id);
+    else openTxnNotes.add(id);
+    renderTransactions();
+}
 
         // ─── UTILITIES ──────────────────────────────────────────────────────
         const fmt = n => '$' + (Math.round(n * 100) / 100).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -2828,18 +2857,25 @@
             return !state.categories.some(c => c.allocations && c.allocations[key] !== undefined);
         }
 
-        function copyBudget(fromY, fromM, toY, toM) {
-            const fromKey = monthKey(fromY, fromM);
-            const toKey = monthKey(toY, toM);
-            state.categories.forEach(c => {
-                if (c.allocations && c.allocations[fromKey] !== undefined) {
-                    c.allocations[toKey] = c.allocations[fromKey];
-                }
-            });
-            save();
-            render();
-            showToast('Budget copied.', 'var(--accent)');
+        function copyBudget(fromY, fromM, toY, toM, copyPrevious = true) {
+    const fromKey = monthKey(fromY, fromM);
+    const toKey = monthKey(toY, toM);
+    state.categories.forEach(c => {
+        if (copyPrevious) {
+            if (c.allocations && c.allocations[fromKey] !== undefined) {
+                c.allocations[toKey] = c.allocations[fromKey];
+            }
+        } else {
+            if (c.type !== 'income') {
+                if (!c.allocations) c.allocations = {};
+                c.allocations[toKey] = 0;
+            }
         }
+    });
+    save();
+    render();
+    showToast(copyPrevious ? 'Budget allocations copied.' : 'Allocations initialized to zero (except Income).', 'var(--accent)');
+}
 
         function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
@@ -2886,28 +2922,28 @@
             }
         }
 
-        function showConfirmToast(msg, onConfirm) {
-            const el = document.getElementById('toast');
-            clearTimeout(toastTimer);
-            el.className = 'toast-confirm';
-            el.innerHTML = '';
-            el.style.background = 'var(--danger)';
-            el.style.display = 'flex';
-            const span = document.createElement('span');
-            span.className = 'toast-msg';
-            span.textContent = msg;
-            el.appendChild(span);
-            const btnYes = document.createElement('button');
-            btnYes.textContent = 'Yes';
-            btnYes.style.cssText = 'background:#fff; color:var(--danger); border:none; border-radius:4px; padding:2px 10px; cursor:pointer; font-weight:700; flex-shrink:0;';
-            btnYes.onclick = e => { e.stopPropagation(); el.style.display = 'none'; onConfirm(); };
-            const btnNo = document.createElement('button');
-            btnNo.textContent = 'No';
-            btnNo.style.cssText = 'background:transparent; color:#fff; border:1px solid #fff; border-radius:4px; padding:2px 10px; cursor:pointer; flex-shrink:0;';
-            btnNo.onclick = e => { e.stopPropagation(); el.style.display = 'none'; };
-            el.appendChild(btnYes);
-            el.appendChild(btnNo);
-        }
+        function showConfirmToast(msg, onConfirm, onCancel) {
+    const el = document.getElementById('toast');
+    clearTimeout(toastTimer);
+    el.className = 'toast-confirm';
+    el.innerHTML = '';
+    el.style.background = 'var(--danger)';
+    el.style.display = 'flex';
+    const span = document.createElement('span');
+    span.className = 'toast-msg';
+    span.textContent = msg;
+    el.appendChild(span);
+    const btnYes = document.createElement('button');
+    btnYes.textContent = 'Yes';
+    btnYes.style.cssText = 'background:#fff; color:var(--danger); border:none; border-radius:4px; padding:2px 10px; cursor:pointer; font-weight:700; flex-shrink:0;';
+    btnYes.onclick = e => { e.stopPropagation(); el.style.display = 'none'; onConfirm(); };
+    const btnNo = document.createElement('button');
+    btnNo.textContent = 'No';
+    btnNo.style.cssText = 'background:transparent; color:#fff; border:1px solid #fff; border-radius:4px; padding:2px 10px; cursor:pointer; flex-shrink:0;';
+    btnNo.onclick = e => { e.stopPropagation(); el.style.display = 'none'; if (onCancel) onCancel(); };
+    el.appendChild(btnYes);
+    el.appendChild(btnNo);
+}
 
         // ─── TABS ────────────────────────────────────────────────────────────
         function switchTab(id, btn) {
@@ -2941,47 +2977,57 @@
 
         // ─── PERIOD NAVIGATION ───────────────────────────────────────────────
         function changeGlobalPeriod(delta) {
-            const oldY = currentYear, oldM = currentMonth;
-            const ts = getTimescale();
-            currentPeriodStart = stepPeriodStart(delta, ts);
-            syncLegacyMonth();
+    const oldY = currentYear, oldM = currentMonth;
+    const ts = getTimescale();
+    currentPeriodStart = stepPeriodStart(delta, ts);
+    syncLegacyMonth();
 
-            if (isMonthBlank(currentYear, currentMonth) && !isMonthBlank(oldY, oldM)) {
-                showConfirmToast('Copy previous budget allocations?', () => copyBudget(oldY, oldM, currentYear, currentMonth));
-            }
+    if (delta > 0 && isMonthBlank(currentYear, currentMonth) && !isMonthBlank(oldY, oldM)) {
+        showConfirmToast(
+            'Copy previous budget allocations?', 
+            () => copyBudget(oldY, oldM, currentYear, currentMonth, true),
+            () => copyBudget(oldY, oldM, currentYear, currentMonth, false)
+        );
+    }
 
-            chartActiveCategoryId = null;
-            chartActiveCategoryFlow = null;
-            chartActiveGroupIds = null;
-            chartActiveGroupLabel = null;
-            render();
-            renderCharts();
-        }
+    chartActiveCategoryId = null;
+    chartActiveCategoryFlow = null;
+    chartActiveGroupIds = null;
+    chartActiveGroupLabel = null;
+    
+    saveTabDateState(currentTabId);
+    
+    render();
+    renderCharts();
+}
 
         function changeGlobalMonth(delta) { changeGlobalPeriod(delta); }
 
         function onTimescaleChange() {
-            const ts = getTimescale();
-            if (ts === 'annually' && lastTimescale !== 'annually') {
-                anchorMonth = currentPeriodStart.getMonth();
-            }
-            currentPeriodStart = snapPeriodStart(ts);
-            if (ts === 'monthly' && lastTimescale === 'annually') {
-                currentPeriodStart = new Date(currentPeriodStart.getFullYear(), anchorMonth, 1);
-            }
-            lastTimescale = ts;
-            syncLegacyMonth();
-            chartActiveCategoryId = null;
-            chartActiveCategoryFlow = null;
-            chartActiveGroupIds = null;
-            chartActiveGroupLabel = null;
-            const pickerModal = document.getElementById('date-picker-modal');
-            if (pickerModal?.classList.contains('open')) {
-                document.getElementById('date-picker-input').value = isoDate(currentPeriodStart);
-            }
-            render();
-            renderCharts();
-        }
+    const ts = getTimescale();
+    if (ts === 'annually' && lastTimescale !== 'annually') {
+        anchorMonth = currentPeriodStart.getMonth();
+    }
+    currentPeriodStart = snapPeriodStart(ts);
+    if (ts === 'monthly' && lastTimescale === 'annually') {
+        currentPeriodStart = new Date(currentPeriodStart.getFullYear(), anchorMonth, 1);
+    }
+    lastTimescale = ts;
+    syncLegacyMonth();
+    chartActiveCategoryId = null;
+    chartActiveCategoryFlow = null;
+    chartActiveGroupIds = null;
+    chartActiveGroupLabel = null;
+    const pickerModal = document.getElementById('date-picker-modal');
+    if (pickerModal?.classList.contains('open')) {
+        document.getElementById('date-picker-input').value = isoDate(currentPeriodStart);
+    }
+    
+    saveTabDateState(currentTabId);
+    
+    render();
+    renderCharts();
+}
 
         // ─── DATE PICKER ─────────────────────────────────────────────────────
         function openDatePicker() {
@@ -3002,21 +3048,27 @@
         }
 
         function applyDatePicker() {
-            const val = document.getElementById('date-picker-input').value;
-            if (!val) return;
-            const parts = val.split('-');
-            if (parts.length !== 3) return;
+    const val = document.getElementById('date-picker-input').value;
+    if (!val) return;
+    const parts = val.split('-');
+    if (parts.length !== 3) return;
 
-            const oldY = currentYear, oldM = currentMonth;
-            currentPeriodStart = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-            currentPeriodStart = snapPeriodStart(getTimescale());
-            syncLegacyMonth();
+    const oldY = currentYear, oldM = currentMonth;
+    const oldDate = new Date(currentPeriodStart.getTime());
+    currentPeriodStart = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    currentPeriodStart = snapPeriodStart(getTimescale());
+    syncLegacyMonth();
 
-            if (isMonthBlank(currentYear, currentMonth) && !isMonthBlank(oldY, oldM)) {
-                showConfirmToast('Copy previous budget allocations?', () => copyBudget(oldY, oldM, currentYear, currentMonth));
-            }
+    const isForward = currentPeriodStart > oldDate;
+    if (isForward && isMonthBlank(currentYear, currentMonth) && !isMonthBlank(oldY, oldM)) {
+        showConfirmToast(
+            'Copy previous budget allocations?', 
+            () => copyBudget(oldY, oldM, currentYear, currentMonth, true),
+            () => copyBudget(oldY, oldM, currentYear, currentMonth, false)
+        );
+    }
 
-            chartActiveCategoryId = null;
+    chartActiveCategoryId = null;
             chartActiveCategoryFlow = null;
             chartActiveGroupIds = null;
             chartActiveGroupLabel = null;
@@ -3277,9 +3329,10 @@
                 const qaOpen = openQuickAdds.has(cat.id);
 
                 const quickAddHTML = showQuickAdd ? `
-        <div class="cat-quick-add${qaOpen ? ' open' : ''}" id="${quickAddId}" onclick="event.stopPropagation()">
-            <div class="cat-quick-add-title">+ New Transaction for ${escapeHTML(cat.name)}</div>
-            <input type="text" placeholder="Description" id="qa-desc-${cat.id}" style="margin-bottom:6px;">
+<div class="cat-quick-add${qaOpen ? ' open' : ''}" id="${quickAddId}" onclick="event.stopPropagation()">
+    <div class="cat-quick-add-title">+ New Transaction for ${escapeHTML(cat.name)}</div>
+    <input type="text" placeholder="Description" id="qa-desc-${cat.id}" style="margin-bottom:6px;">
+    <input type="text" placeholder="Notes (optional)" id="qa-note-${cat.id}" style="margin-bottom:6px;">
             <div class="input-row" style="margin-bottom:6px;">
                 <input type="number" placeholder="Amount ($)" step="0.01" min="0" id="qa-amt-${cat.id}">
                 <select id="qa-flow-${cat.id}">
@@ -3387,53 +3440,65 @@
 
         // ─── TRANSACTIONS VIEW ───────────────────────────────────────────────
         function renderTransactions() {
-            const el = document.getElementById('txn-list');
-            if (!el) return;
+    const el = document.getElementById('txn-list');
+    if (!el) return;
 
-            const ts = getTimescale();
-            const periodEnd = getPeriodEnd(currentPeriodStart, ts);
+    const ts = getTimescale();
+    const periodEnd = getPeriodEnd(currentPeriodStart, ts);
 
-            const labelEl = document.getElementById('txn-list-label');
-            if (labelEl) labelEl.textContent = formatPeriodLabel(currentPeriodStart, ts) + ' Transactions';
+    const labelEl = document.getElementById('txn-list-label');
+    if (labelEl) labelEl.textContent = formatPeriodLabel(currentPeriodStart, ts) + ' Transactions';
 
-            const periodTxns = getTxnsForPeriod(currentPeriodStart, periodEnd);
-            const sorted = [...periodTxns].sort((a, b) => {
-                const dc = (b.date || '').localeCompare(a.date || '');
-                return dc !== 0 ? dc : b.id - a.id;
-            });
+    const periodTxns = getTxnsForPeriod(currentPeriodStart, periodEnd);
+    const sorted = [...periodTxns].sort((a, b) => {
+        const dc = (b.date || '').localeCompare(a.date || '');
+        return dc !== 0 ? dc : b.id - a.id;
+    });
 
-            if (sorted.length === 0) {
-                el.innerHTML = `<div class="empty-state">No transactions in ${formatPeriodLabel(currentPeriodStart, ts)}.</div>`;
-                return;
-            }
+    if (sorted.length === 0) {
+        el.innerHTML = `<div class="empty-state">No transactions in ${formatPeriodLabel(currentPeriodStart, ts)}.</div>`;
+        return;
+    }
 
-            let html = '';
-            sorted.forEach(t => {
-                const cat = state.categories.find(c => c.id == t.catId);
-                const catName = cat ? escapeHTML(cat.name) : 'Uncategorized';
-                const dotColor = cat
-                    ? (cat.type === 'income' ? 'var(--income)' :
-                        cat.type === 'sinking' ? 'var(--sinking)' : 'var(--accent)')
-                    : 'var(--border)';
-                const amtColor = t.type === 'inflow' ? 'var(--income)' : 'var(--text)';
-                const sign = t.type === 'inflow' ? '+' : '–';
+    let html = '';
+    sorted.forEach(t => {
+        const cat = state.categories.find(c => c.id == t.catId);
+        const catName = cat ? escapeHTML(cat.name) : 'Uncategorized';
+        const dotColor = cat
+            ? (cat.type === 'income' ? 'var(--income)' :
+                cat.type === 'sinking' ? 'var(--sinking)' : 'var(--accent)')
+            : 'var(--border)';
+        const amtColor = t.type === 'inflow' ? 'var(--income)' : 'var(--text)';
+        const sign = t.type === 'inflow' ? '+' : '–';
 
-                html += `
-        <div class="txn-item" id="txn-${t.id}">
-            <div class="txn-dot" style="background:${dotColor}"></div>
-            <div class="txn-info">
-                <div class="txn-desc">${escapeHTML(t.desc)}</div>
-                <div class="txn-meta">${catName} · ${t.date}</div>
+        const hasNote = !!t.note;
+        const noteIndicator = hasNote ? '<span style="margin-left: 6px; cursor: pointer;" title="Has Note">📝</span>' : '';
+        const isExpanded = openTxnNotes.has(t.id);
+        const notePanel = (hasNote && isExpanded) ? `
+            <div style="width: 100%; padding: 6px 10px; margin-top: 6px; background: var(--surface); border-radius: 6px; font-size: 0.8rem; color: var(--text2); font-style: italic; border-left: 2px solid var(--accent); white-space: normal; word-break: break-word;">
+                ${escapeHTML(t.note)}
             </div>
-            <div class="txn-amt" style="color:${amtColor}">${sign}${fmtDec(t.amt)}</div>
+        ` : '';
+
+        html += `
+        <div class="txn-item" id="txn-${t.id}">
+            <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer;" onclick="toggleTxnNote(${t.id})">
+                <div class="txn-dot" style="background:${dotColor}"></div>
+                <div class="txn-info">
+                    <div class="txn-desc">${escapeHTML(t.desc)}${noteIndicator}</div>
+                    <div class="txn-meta">${catName} · ${t.date}</div>
+                    ${notePanel}
+                </div>
+                <div class="txn-amt" style="color:${amtColor}">${sign}${fmtDec(t.amt)}</div>
+            </div>
             <div class="txn-actions">
                 <button class="icon-btn" onclick="openEditTxnModal(${t.id})" title="Edit">✎</button>
                 <button class="icon-btn del" onclick="deleteTransaction(${t.id})" title="Delete">✕</button>
             </div>
         </div>`;
-            });
-            el.innerHTML = html;
-        }
+    });
+    el.innerHTML = html;
+}
 
         // ─── CATEGORY SELECTS ────────────────────────────────────────────────
         function populateCatSelects() {
@@ -3543,54 +3608,75 @@
 
         // ─── TRANSACTION CRUD ────────────────────────────────────────────────
         function addTransaction() {
-            const desc = document.getElementById('txn-desc').value.trim();
-            const catId = document.getElementById('txn-cat').value;
-            const amt = parseFloat(document.getElementById('txn-amt').value);
-            const flow = document.getElementById('txn-flow').value;
-            const date = document.getElementById('txn-date').value || todayISO();
+    const desc = document.getElementById('txn-desc').value.trim();
+    const note = document.getElementById('txn-note').value.trim();
+    const catId = document.getElementById('txn-cat').value;
+    const amt = parseFloat(document.getElementById('txn-amt').value);
+    const flow = document.getElementById('txn-flow').value;
+    const date = document.getElementById('txn-date').value || todayISO();
 
-            if (!desc) { showToast('Enter a description.', 'var(--danger)'); return; }
-            if (isNaN(amt) || amt <= 0) { showToast('Enter a valid amount.', 'var(--danger)'); return; }
+    if (!desc) { showToast('Enter a description.', 'var(--danger)'); return; }
+    if (isNaN(amt) || amt <= 0) { showToast('Enter a valid amount.', 'var(--danger)'); return; }
 
-            state.transactions.unshift({ id: Date.now(), desc, catId: catId || '', amt, date, type: flow });
+    state.transactions.unshift({ id: Date.now(), desc, catId: catId || '', amt, date, type: flow, note });
 
-            document.getElementById('txn-desc').value = '';
-            document.getElementById('txn-amt').value = '';
-            save();
-            render();
-            showBudgetToast(catId, flow);
-        }
+    document.getElementById('txn-desc').value = '';
+    document.getElementById('txn-note').value = '';
+    document.getElementById('txn-amt').value = '';
+    save();
+    render();
+    showBudgetToast(catId, flow);
+}
+
+function saveQuickAddTxn(catId) {
+    const desc = document.getElementById('qa-desc-' + catId)?.value.trim();
+    const note = document.getElementById('qa-note-' + catId)?.value.trim() || '';
+    const amt = parseFloat(document.getElementById('qa-amt-' + catId)?.value);
+    const flow = document.getElementById('qa-flow-' + catId)?.value || 'outflow';
+    const date = document.getElementById('qa-date-' + catId)?.value || todayISO();
+
+    if (!desc) { showToast('Enter a description.', 'var(--danger)'); return; }
+    if (isNaN(amt) || amt <= 0) { showToast('Enter a valid amount.', 'var(--danger)'); return; }
+
+    state.transactions.unshift({ id: Date.now(), desc, catId: catId, amt, date, type: flow, note });
+    openQuickAdds.delete(catId);
+    save();
+    render();
+    showBudgetToast(catId, flow);
+}
 
         function openEditTxnModal(id) {
-            const t = state.transactions.find(t => t.id === id);
-            if (!t) return;
-            populateCatSelects();
-            document.getElementById('txn-edit-id').value = id;
-            document.getElementById('txn-edit-desc').value = t.desc;
-            document.getElementById('txn-edit-amt').value = t.amt;
-            document.getElementById('txn-edit-flow').value = t.type;
-            document.getElementById('txn-edit-date').value = t.date;
-            document.getElementById('txn-edit-cat').value = t.catId || '';
-            document.getElementById('txn-modal').classList.add('open');
-        }
+    const t = state.transactions.find(t => t.id === id);
+    if (!t) return;
+    populateCatSelects();
+    document.getElementById('txn-edit-id').value = id;
+    document.getElementById('txn-edit-desc').value = t.desc;
+    document.getElementById('txn-edit-note').value = t.note || '';
+    document.getElementById('txn-edit-amt').value = t.amt;
+    document.getElementById('txn-edit-flow').value = t.type;
+    document.getElementById('txn-edit-date').value = t.date;
+    document.getElementById('txn-edit-cat').value = t.catId || '';
+    document.getElementById('txn-modal').classList.add('open');
+}
 
-        function closeTxnModal() { document.getElementById('txn-modal').classList.remove('open'); }
+function closeTxnModal() { document.getElementById('txn-modal').classList.remove('open'); }
 
-        function saveEditTransaction() {
-            const id = parseInt(document.getElementById('txn-edit-id').value);
-            const t = state.transactions.find(t => t.id === id);
-            if (!t) return;
-            t.desc = document.getElementById('txn-edit-desc').value.trim();
-            t.amt = parseFloat(document.getElementById('txn-edit-amt').value) || 0;
-            t.type = document.getElementById('txn-edit-flow').value;
-            t.date = document.getElementById('txn-edit-date').value;
-            t.catId = document.getElementById('txn-edit-cat').value;
+function saveEditTransaction() {
+    const id = parseInt(document.getElementById('txn-edit-id').value);
+    const t = state.transactions.find(t => t.id === id);
+    if (!t) return;
+    t.desc = document.getElementById('txn-edit-desc').value.trim();
+    t.note = document.getElementById('txn-edit-note').value.trim();
+    t.amt = parseFloat(document.getElementById('txn-edit-amt').value) || 0;
+    t.type = document.getElementById('txn-edit-flow').value;
+    t.date = document.getElementById('txn-edit-date').value;
+    t.catId = document.getElementById('txn-edit-cat').value;
 
-            closeTxnModal();
-            save();
-            render();
-            showBudgetToast(t.catId, t.type);
-        }
+    closeTxnModal();
+    save();
+    render();
+    showBudgetToast(t.catId, t.type);
+}
 
         function deleteTransaction(id) {
             const txn = state.transactions.find(t => t.id === id);
@@ -3764,7 +3850,30 @@
                                 return pct >= 5 ? pct.toFixed(0) + '%' : '';
                             }
                         },
-                        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${fmtDec(ctx.parsed)}` } }
+                        tooltip: {
+    callbacks: {
+        label: ctx => {
+            const index = ctx.dataIndex;
+            const meta = chartSliceMetaIds[index];
+            const baseLabel = ` ${ctx.label}: ${fmtDec(ctx.parsed)}`;
+            if (meta) {
+                if (typeof meta === 'number') {
+                    const t = state.transactions.find(x => x.id === meta);
+                    if (t && t.note) return [baseLabel, `Note: ${t.note}`];
+                } else if (meta.grouped) {
+                    const notes = meta.ids
+                        .map(id => state.transactions.find(x => x.id === id))
+                        .filter(t => t && t.note)
+                        .map(t => t.note);
+                    if (notes.length > 0) {
+                        return [baseLabel, `Notes: ${notes.join(', ')}`];
+                    }
+                }
+            }
+            return baseLabel;
+        }
+    }
+}
                     },
                     onClick: (e, elements) => {
                         if (chartTouchJustHandled) return;
