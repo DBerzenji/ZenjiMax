@@ -1595,8 +1595,8 @@
                 <div id="mod-txn-logger">
                     <div class="form-card" style="margin-top:14px;">
                         <div class="form-title">Log a Transaction</div>
-                        <input type="text" id="txn-desc" placeholder="Description (e.g. Safeway run)">
-                        <div class="input-row" style="margin-bottom:8px;">
+<input type="text" id="txn-desc" placeholder="Description (e.g. Safeway run)">
+<div class="input-row" style="margin-bottom:8px;">
                             <select id="txn-cat"></select>
                             <select id="txn-flow">
                                 <option value="outflow">Outflow (–)</option>
@@ -1607,6 +1607,7 @@
                             <input type="number" id="txn-amt" placeholder="Amount ($)" step="0.01" min="0">
                             <input type="date" id="txn-date">
                         </div>
+<input type="text" id="txn-note" placeholder="Notes (optional)">
                         <button class="btn-primary" onclick="addTransaction()">Log Transaction</button>
                     </div>
                 </div>
@@ -1993,12 +1994,12 @@
     </div>
 
     <div class="modal-bg" id="txn-modal" onclick="if(event.target===this)closeTxnModal()">
-        <div class="modal-box">
-            <div class="modal-handle"></div>
-            <div class="modal-title">Edit Transaction</div>
-            <input type="hidden" id="txn-edit-id">
-            <label class="field-label">Description</label>
-            <input type="text" id="txn-edit-desc">
+    <div class="modal-box">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Edit Transaction</div>
+        <input type="hidden" id="txn-edit-id">
+        <label class="field-label">Description</label>
+        <input type="text" id="txn-edit-desc">
             <label class="field-label">Category</label>
             <select id="txn-edit-cat"></select>
             <div class="input-row" style="margin-bottom:8px;">
@@ -2016,6 +2017,8 @@
             </div>
             <label class="field-label">Date</label>
             <input type="date" id="txn-edit-date">
+            <label class="field-label">Notes</label>
+        <input type="text" id="txn-edit-note" placeholder="Notes (optional)">
             <div class="modal-actions">
                 <button class="btn-primary secondary" onclick="closeTxnModal()">Cancel</button>
                 <button class="btn-primary" onclick="saveEditTransaction()">Save Changes</button>
@@ -2410,6 +2413,13 @@ function restoreTabDateState(tabId) {
         let lastTimescale = 'monthly';
         let anchorMonth = TODAY.getMonth();
         const openCatPanels = new Set();
+const openTxnNotes = new Set();
+
+function toggleTxnNote(id) {
+    if (openTxnNotes.has(id)) openTxnNotes.delete(id);
+    else openTxnNotes.add(id);
+    renderTransactions();
+}
 
         // ─── UTILITIES ──────────────────────────────────────────────────────
         const fmt = n => '$' + (Math.round(n * 100) / 100).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -3292,9 +3302,10 @@ function restoreTabDateState(tabId) {
                 const qaOpen = openQuickAdds.has(cat.id);
 
                 const quickAddHTML = showQuickAdd ? `
-        <div class="cat-quick-add${qaOpen ? ' open' : ''}" id="${quickAddId}" onclick="event.stopPropagation()">
-            <div class="cat-quick-add-title">+ New Transaction for ${escapeHTML(cat.name)}</div>
-            <input type="text" placeholder="Description" id="qa-desc-${cat.id}" style="margin-bottom:6px;">
+<div class="cat-quick-add${qaOpen ? ' open' : ''}" id="${quickAddId}" onclick="event.stopPropagation()">
+    <div class="cat-quick-add-title">+ New Transaction for ${escapeHTML(cat.name)}</div>
+    <input type="text" placeholder="Description" id="qa-desc-${cat.id}" style="margin-bottom:6px;">
+    <input type="text" placeholder="Notes (optional)" id="qa-note-${cat.id}" style="margin-bottom:6px;">
             <div class="input-row" style="margin-bottom:6px;">
                 <input type="number" placeholder="Amount ($)" step="0.01" min="0" id="qa-amt-${cat.id}">
                 <select id="qa-flow-${cat.id}">
@@ -3402,53 +3413,65 @@ function restoreTabDateState(tabId) {
 
         // ─── TRANSACTIONS VIEW ───────────────────────────────────────────────
         function renderTransactions() {
-            const el = document.getElementById('txn-list');
-            if (!el) return;
+    const el = document.getElementById('txn-list');
+    if (!el) return;
 
-            const ts = getTimescale();
-            const periodEnd = getPeriodEnd(currentPeriodStart, ts);
+    const ts = getTimescale();
+    const periodEnd = getPeriodEnd(currentPeriodStart, ts);
 
-            const labelEl = document.getElementById('txn-list-label');
-            if (labelEl) labelEl.textContent = formatPeriodLabel(currentPeriodStart, ts) + ' Transactions';
+    const labelEl = document.getElementById('txn-list-label');
+    if (labelEl) labelEl.textContent = formatPeriodLabel(currentPeriodStart, ts) + ' Transactions';
 
-            const periodTxns = getTxnsForPeriod(currentPeriodStart, periodEnd);
-            const sorted = [...periodTxns].sort((a, b) => {
-                const dc = (b.date || '').localeCompare(a.date || '');
-                return dc !== 0 ? dc : b.id - a.id;
-            });
+    const periodTxns = getTxnsForPeriod(currentPeriodStart, periodEnd);
+    const sorted = [...periodTxns].sort((a, b) => {
+        const dc = (b.date || '').localeCompare(a.date || '');
+        return dc !== 0 ? dc : b.id - a.id;
+    });
 
-            if (sorted.length === 0) {
-                el.innerHTML = `<div class="empty-state">No transactions in ${formatPeriodLabel(currentPeriodStart, ts)}.</div>`;
-                return;
-            }
+    if (sorted.length === 0) {
+        el.innerHTML = `<div class="empty-state">No transactions in ${formatPeriodLabel(currentPeriodStart, ts)}.</div>`;
+        return;
+    }
 
-            let html = '';
-            sorted.forEach(t => {
-                const cat = state.categories.find(c => c.id == t.catId);
-                const catName = cat ? escapeHTML(cat.name) : 'Uncategorized';
-                const dotColor = cat
-                    ? (cat.type === 'income' ? 'var(--income)' :
-                        cat.type === 'sinking' ? 'var(--sinking)' : 'var(--accent)')
-                    : 'var(--border)';
-                const amtColor = t.type === 'inflow' ? 'var(--income)' : 'var(--text)';
-                const sign = t.type === 'inflow' ? '+' : '–';
+    let html = '';
+    sorted.forEach(t => {
+        const cat = state.categories.find(c => c.id == t.catId);
+        const catName = cat ? escapeHTML(cat.name) : 'Uncategorized';
+        const dotColor = cat
+            ? (cat.type === 'income' ? 'var(--income)' :
+                cat.type === 'sinking' ? 'var(--sinking)' : 'var(--accent)')
+            : 'var(--border)';
+        const amtColor = t.type === 'inflow' ? 'var(--income)' : 'var(--text)';
+        const sign = t.type === 'inflow' ? '+' : '–';
 
-                html += `
-        <div class="txn-item" id="txn-${t.id}">
-            <div class="txn-dot" style="background:${dotColor}"></div>
-            <div class="txn-info">
-                <div class="txn-desc">${escapeHTML(t.desc)}</div>
-                <div class="txn-meta">${catName} · ${t.date}</div>
+        const hasNote = !!t.note;
+        const noteIndicator = hasNote ? '<span style="margin-left: 6px; cursor: pointer;" title="Has Note">📝</span>' : '';
+        const isExpanded = openTxnNotes.has(t.id);
+        const notePanel = (hasNote && isExpanded) ? `
+            <div style="width: 100%; padding: 6px 10px; margin-top: 6px; background: var(--surface); border-radius: 6px; font-size: 0.8rem; color: var(--text2); font-style: italic; border-left: 2px solid var(--accent); white-space: normal; word-break: break-word;">
+                ${escapeHTML(t.note)}
             </div>
-            <div class="txn-amt" style="color:${amtColor}">${sign}${fmtDec(t.amt)}</div>
+        ` : '';
+
+        html += `
+        <div class="txn-item" id="txn-${t.id}">
+            <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer;" onclick="toggleTxnNote(${t.id})">
+                <div class="txn-dot" style="background:${dotColor}"></div>
+                <div class="txn-info">
+                    <div class="txn-desc">${escapeHTML(t.desc)}${noteIndicator}</div>
+                    <div class="txn-meta">${catName} · ${t.date}</div>
+                    ${notePanel}
+                </div>
+                <div class="txn-amt" style="color:${amtColor}">${sign}${fmtDec(t.amt)}</div>
+            </div>
             <div class="txn-actions">
                 <button class="icon-btn" onclick="openEditTxnModal(${t.id})" title="Edit">✎</button>
                 <button class="icon-btn del" onclick="deleteTransaction(${t.id})" title="Delete">✕</button>
             </div>
         </div>`;
-            });
-            el.innerHTML = html;
-        }
+    });
+    el.innerHTML = html;
+}
 
         // ─── CATEGORY SELECTS ────────────────────────────────────────────────
         function populateCatSelects() {
@@ -3558,54 +3581,75 @@ function restoreTabDateState(tabId) {
 
         // ─── TRANSACTION CRUD ────────────────────────────────────────────────
         function addTransaction() {
-            const desc = document.getElementById('txn-desc').value.trim();
-            const catId = document.getElementById('txn-cat').value;
-            const amt = parseFloat(document.getElementById('txn-amt').value);
-            const flow = document.getElementById('txn-flow').value;
-            const date = document.getElementById('txn-date').value || todayISO();
+    const desc = document.getElementById('txn-desc').value.trim();
+    const note = document.getElementById('txn-note').value.trim();
+    const catId = document.getElementById('txn-cat').value;
+    const amt = parseFloat(document.getElementById('txn-amt').value);
+    const flow = document.getElementById('txn-flow').value;
+    const date = document.getElementById('txn-date').value || todayISO();
 
-            if (!desc) { showToast('Enter a description.', 'var(--danger)'); return; }
-            if (isNaN(amt) || amt <= 0) { showToast('Enter a valid amount.', 'var(--danger)'); return; }
+    if (!desc) { showToast('Enter a description.', 'var(--danger)'); return; }
+    if (isNaN(amt) || amt <= 0) { showToast('Enter a valid amount.', 'var(--danger)'); return; }
 
-            state.transactions.unshift({ id: Date.now(), desc, catId: catId || '', amt, date, type: flow });
+    state.transactions.unshift({ id: Date.now(), desc, catId: catId || '', amt, date, type: flow, note });
 
-            document.getElementById('txn-desc').value = '';
-            document.getElementById('txn-amt').value = '';
-            save();
-            render();
-            showBudgetToast(catId, flow);
-        }
+    document.getElementById('txn-desc').value = '';
+    document.getElementById('txn-note').value = '';
+    document.getElementById('txn-amt').value = '';
+    save();
+    render();
+    showBudgetToast(catId, flow);
+}
+
+function saveQuickAddTxn(catId) {
+    const desc = document.getElementById('qa-desc-' + catId)?.value.trim();
+    const note = document.getElementById('qa-note-' + catId)?.value.trim() || '';
+    const amt = parseFloat(document.getElementById('qa-amt-' + catId)?.value);
+    const flow = document.getElementById('qa-flow-' + catId)?.value || 'outflow';
+    const date = document.getElementById('qa-date-' + catId)?.value || todayISO();
+
+    if (!desc) { showToast('Enter a description.', 'var(--danger)'); return; }
+    if (isNaN(amt) || amt <= 0) { showToast('Enter a valid amount.', 'var(--danger)'); return; }
+
+    state.transactions.unshift({ id: Date.now(), desc, catId: catId, amt, date, type: flow, note });
+    openQuickAdds.delete(catId);
+    save();
+    render();
+    showBudgetToast(catId, flow);
+}
 
         function openEditTxnModal(id) {
-            const t = state.transactions.find(t => t.id === id);
-            if (!t) return;
-            populateCatSelects();
-            document.getElementById('txn-edit-id').value = id;
-            document.getElementById('txn-edit-desc').value = t.desc;
-            document.getElementById('txn-edit-amt').value = t.amt;
-            document.getElementById('txn-edit-flow').value = t.type;
-            document.getElementById('txn-edit-date').value = t.date;
-            document.getElementById('txn-edit-cat').value = t.catId || '';
-            document.getElementById('txn-modal').classList.add('open');
-        }
+    const t = state.transactions.find(t => t.id === id);
+    if (!t) return;
+    populateCatSelects();
+    document.getElementById('txn-edit-id').value = id;
+    document.getElementById('txn-edit-desc').value = t.desc;
+    document.getElementById('txn-edit-note').value = t.note || '';
+    document.getElementById('txn-edit-amt').value = t.amt;
+    document.getElementById('txn-edit-flow').value = t.type;
+    document.getElementById('txn-edit-date').value = t.date;
+    document.getElementById('txn-edit-cat').value = t.catId || '';
+    document.getElementById('txn-modal').classList.add('open');
+}
 
-        function closeTxnModal() { document.getElementById('txn-modal').classList.remove('open'); }
+function closeTxnModal() { document.getElementById('txn-modal').classList.remove('open'); }
 
-        function saveEditTransaction() {
-            const id = parseInt(document.getElementById('txn-edit-id').value);
-            const t = state.transactions.find(t => t.id === id);
-            if (!t) return;
-            t.desc = document.getElementById('txn-edit-desc').value.trim();
-            t.amt = parseFloat(document.getElementById('txn-edit-amt').value) || 0;
-            t.type = document.getElementById('txn-edit-flow').value;
-            t.date = document.getElementById('txn-edit-date').value;
-            t.catId = document.getElementById('txn-edit-cat').value;
+function saveEditTransaction() {
+    const id = parseInt(document.getElementById('txn-edit-id').value);
+    const t = state.transactions.find(t => t.id === id);
+    if (!t) return;
+    t.desc = document.getElementById('txn-edit-desc').value.trim();
+    t.note = document.getElementById('txn-edit-note').value.trim();
+    t.amt = parseFloat(document.getElementById('txn-edit-amt').value) || 0;
+    t.type = document.getElementById('txn-edit-flow').value;
+    t.date = document.getElementById('txn-edit-date').value;
+    t.catId = document.getElementById('txn-edit-cat').value;
 
-            closeTxnModal();
-            save();
-            render();
-            showBudgetToast(t.catId, t.type);
-        }
+    closeTxnModal();
+    save();
+    render();
+    showBudgetToast(t.catId, t.type);
+}
 
         function deleteTransaction(id) {
             const txn = state.transactions.find(t => t.id === id);
@@ -3779,7 +3823,30 @@ function restoreTabDateState(tabId) {
                                 return pct >= 5 ? pct.toFixed(0) + '%' : '';
                             }
                         },
-                        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${fmtDec(ctx.parsed)}` } }
+                        tooltip: {
+    callbacks: {
+        label: ctx => {
+            const index = ctx.dataIndex;
+            const meta = chartSliceMetaIds[index];
+            const baseLabel = ` ${ctx.label}: ${fmtDec(ctx.parsed)}`;
+            if (meta) {
+                if (typeof meta === 'number') {
+                    const t = state.transactions.find(x => x.id === meta);
+                    if (t && t.note) return [baseLabel, `Note: ${t.note}`];
+                } else if (meta.grouped) {
+                    const notes = meta.ids
+                        .map(id => state.transactions.find(x => x.id === id))
+                        .filter(t => t && t.note)
+                        .map(t => t.note);
+                    if (notes.length > 0) {
+                        return [baseLabel, `Notes: ${notes.join(', ')}`];
+                    }
+                }
+            }
+            return baseLabel;
+        }
+    }
+}
                     },
                     onClick: (e, elements) => {
                         if (chartTouchJustHandled) return;
