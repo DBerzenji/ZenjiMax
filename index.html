@@ -2098,39 +2098,48 @@
         }
         //PIN HERE
 
-        // ─── MISSING HELPERS ──────────────────────────────────────────────────
+// Helper to check if tab is dashboard
+function isDashboardTab(tabId) {
+    const t = state.tabs?.find(x => x.id === tabId);
+    return t && t.type === 'dashboard';
+}
 
-        function saveTabDateState(tabId) {
-            if (!tabId) return;
-            if (!state.tabDates) state.tabDates = {};
-            state.tabDates[tabId] = {
-                periodStartISO: isoDate(currentPeriodStart),
-                ts: getTimescale()
-            };
-            save();
-        }
+function saveTabDateState(tabId) {
+    if (!tabId) return;
+    if (!state.tabDates) state.tabDates = {};
+    const data = {
+        periodStartISO: isoDate(currentPeriodStart),
+        ts: getTimescale()
+    };
+    if (isDashboardTab(tabId)) {
+        state.tabDates[tabId] = data;
+    } else {
+        state.sharedPeriod = data;
+    }
+    save();
+}
 
-        function restoreTabDateState(tabId) {
-            if (!tabId) return;
-            if (!state.tabDates) state.tabDates = {};
-            const saved = state.tabDates[tabId];
-            if (saved) {
-                const parts = saved.periodStartISO.split('-');
-                currentPeriodStart = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                const tsEl = document.getElementById('budget-ts');
-                if (tsEl) {
-                    tsEl.value = saved.ts || 'monthly';
-                }
-            } else {
-                const d = new Date();
-                currentPeriodStart = new Date(d.getFullYear(), d.getMonth(), 1);
-                const tsEl = document.getElementById('budget-ts');
-                if (tsEl) {
-                    tsEl.value = 'monthly';
-                }
-            }
-            syncLegacyMonth();
+function restoreTabDateState(tabId) {
+    if (!tabId) return;
+    if (!state.tabDates) state.tabDates = {};
+    const saved = isDashboardTab(tabId) ? state.tabDates[tabId] : state.sharedPeriod;
+    if (saved) {
+        const parts = saved.periodStartISO.split('-');
+        currentPeriodStart = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        const tsEl = document.getElementById('budget-ts');
+        if (tsEl) {
+            tsEl.value = saved.ts || 'monthly';
         }
+    } else {
+        const d = new Date();
+        currentPeriodStart = new Date(d.getFullYear(), d.getMonth(), 1);
+        const tsEl = document.getElementById('budget-ts');
+        if (tsEl) {
+            tsEl.value = 'monthly';
+        }
+    }
+    syncLegacyMonth();
+}
 
         function renderFIPensionsList() {
             const container = document.getElementById('fi-pensions-list');
@@ -2941,47 +2950,53 @@
 
         // ─── PERIOD NAVIGATION ───────────────────────────────────────────────
         function changeGlobalPeriod(delta) {
-            const oldY = currentYear, oldM = currentMonth;
-            const ts = getTimescale();
-            currentPeriodStart = stepPeriodStart(delta, ts);
-            syncLegacyMonth();
+    const oldY = currentYear, oldM = currentMonth;
+    const ts = getTimescale();
+    currentPeriodStart = stepPeriodStart(delta, ts);
+    syncLegacyMonth();
 
-            if (isMonthBlank(currentYear, currentMonth) && !isMonthBlank(oldY, oldM)) {
-                showConfirmToast('Copy previous budget allocations?', () => copyBudget(oldY, oldM, currentYear, currentMonth));
-            }
+    if (isMonthBlank(currentYear, currentMonth) && !isMonthBlank(oldY, oldM)) {
+        showConfirmToast('Copy previous budget allocations?', () => copyBudget(oldY, oldM, currentYear, currentMonth));
+    }
 
-            chartActiveCategoryId = null;
-            chartActiveCategoryFlow = null;
-            chartActiveGroupIds = null;
-            chartActiveGroupLabel = null;
-            render();
-            renderCharts();
-        }
+    chartActiveCategoryId = null;
+    chartActiveCategoryFlow = null;
+    chartActiveGroupIds = null;
+    chartActiveGroupLabel = null;
+    
+    saveTabDateState(currentTabId);
+    
+    render();
+    renderCharts();
+}
 
         function changeGlobalMonth(delta) { changeGlobalPeriod(delta); }
 
         function onTimescaleChange() {
-            const ts = getTimescale();
-            if (ts === 'annually' && lastTimescale !== 'annually') {
-                anchorMonth = currentPeriodStart.getMonth();
-            }
-            currentPeriodStart = snapPeriodStart(ts);
-            if (ts === 'monthly' && lastTimescale === 'annually') {
-                currentPeriodStart = new Date(currentPeriodStart.getFullYear(), anchorMonth, 1);
-            }
-            lastTimescale = ts;
-            syncLegacyMonth();
-            chartActiveCategoryId = null;
-            chartActiveCategoryFlow = null;
-            chartActiveGroupIds = null;
-            chartActiveGroupLabel = null;
-            const pickerModal = document.getElementById('date-picker-modal');
-            if (pickerModal?.classList.contains('open')) {
-                document.getElementById('date-picker-input').value = isoDate(currentPeriodStart);
-            }
-            render();
-            renderCharts();
-        }
+    const ts = getTimescale();
+    if (ts === 'annually' && lastTimescale !== 'annually') {
+        anchorMonth = currentPeriodStart.getMonth();
+    }
+    currentPeriodStart = snapPeriodStart(ts);
+    if (ts === 'monthly' && lastTimescale === 'annually') {
+        currentPeriodStart = new Date(currentPeriodStart.getFullYear(), anchorMonth, 1);
+    }
+    lastTimescale = ts;
+    syncLegacyMonth();
+    chartActiveCategoryId = null;
+    chartActiveCategoryFlow = null;
+    chartActiveGroupIds = null;
+    chartActiveGroupLabel = null;
+    const pickerModal = document.getElementById('date-picker-modal');
+    if (pickerModal?.classList.contains('open')) {
+        document.getElementById('date-picker-input').value = isoDate(currentPeriodStart);
+    }
+    
+    saveTabDateState(currentTabId);
+    
+    render();
+    renderCharts();
+}
 
         // ─── DATE PICKER ─────────────────────────────────────────────────────
         function openDatePicker() {
