@@ -1439,7 +1439,8 @@ textarea {
                 <div class="hstat-val" id="h-savings">$0</div>
             </div>
         </div>
-        <div class="header-actions">
+        <div class="header-actions" style="display:flex;gap:8px;align-items:center;">
+            <button class="btn-sm solid" onclick="performUndo()" title="Undo (Ctrl+Z)" style="min-width:60px;">↶ Undo</button>
             <button class="btn-sm solid" onclick="exportCSV()">Export</button>
         </div>
     </header>
@@ -2866,18 +2867,13 @@ function toggleTxnNote(id) {
 
         function isMonthBlank(y, m) {
             const key = monthKey(y, m);
-            // Check if any category has allocations for this month OR if there are any transactions in this month
+            // Check if any category has allocations for this month
             const hasAllocations = state.categories.some(c => c.allocations && c.allocations[key] !== undefined);
             if (hasAllocations) return false;
             
-            // Check for transactions in this month
-            const monthStart = new Date(y, m, 1);
-            const monthEnd = new Date(y, m + 1, 0);
-            const hasTransactions = state.transactions.some(t => {
-                const txnDate = new Date(t.date);
-                return txnDate >= monthStart && txnDate <= monthEnd;
-            });
-            return !hasTransactions;
+            // Do NOT check for transactions - only allocations matter for the prompt
+            // This fixes issue #24 where imported data triggers unwanted prompts
+            return true;
         }
 
         function copyBudget(fromY, fromM, toY, toM, copyPrevious = true) {
@@ -2899,6 +2895,144 @@ function toggleTxnNote(id) {
     render();
     showToast(copyPrevious ? 'Budget allocations copied.' : 'Allocations initialized to zero (except Income).', 'var(--accent)');
 }
+
+        // ─── UNDO SYSTEM ─────────────────────────────────────────────────────
+        const MAX_UNDO_HISTORY = 50;
+        let undoStack = [];
+        let redoStack = [];
+        
+        function pushUndoState(actionDescription) {
+            // Clone relevant state for undo
+            const stateSnapshot = {
+                categories: JSON.parse(JSON.stringify(state.categories)),
+                transactions: JSON.parse(JSON.stringify(state.transactions)),
+                tabs: JSON.parse(JSON.stringify(state.tabs)),
+                nwItems: JSON.parse(JSON.stringify(state.nwItems)),
+                fi: JSON.parse(JSON.stringify(state.fi || {})),
+                settings: JSON.parse(JSON.stringify(state.settings || {}))
+            };
+            
+            undoStack.push({
+                snapshot: stateSnapshot,
+                action: actionDescription
+            });
+            
+            // Limit stack size
+            if (undoStack.length > MAX_UNDO_HISTORY) {
+                undoStack.shift();
+            }
+            
+            // Clear redo stack on new action
+            redoStack = [];
+        }
+        
+        function performUndo() {
+            if (undoStack.length === 0) {
+                showToast('Nothing to undo', 'var(--text2)');
+                return;
+            }
+            
+            // Save current state for redo
+            const currentState = {
+                categories: JSON.parse(JSON.stringify(state.categories)),
+                transactions: JSON.parse(JSON.stringify(state.transactions)),
+                tabs: JSON.parse(JSON.stringify(state.tabs)),
+                nwItems: JSON.parse(JSON.stringify(state.nwItems)),
+                fi: JSON.parse(JSON.stringify(state.fi || {})),
+                settings: JSON.parse(JSON.stringify(state.settings || {}))
+            };
+            
+            const lastAction = undoStack.pop();
+            redoStack.push({
+                snapshot: currentState,
+                action: lastAction.action
+            });
+            
+            // Restore previous state
+            state.categories = JSON.parse(JSON.stringify(lastAction.snapshot.categories));
+            state.transactions = JSON.parse(JSON.stringify(lastAction.snapshot.transactions));
+            state.tabs = JSON.parse(JSON.stringify(lastAction.snapshot.tabs));
+            state.nwItems = JSON.parse(JSON.stringify(lastAction.snapshot.nwItems));
+            state.fi = JSON.parse(JSON.stringify(lastAction.snapshot.fi));
+            state.settings = JSON.parse(JSON.stringify(lastAction.snapshot.settings));
+            
+            save();
+            render();
+            renderCharts();
+            
+            // Show stylized undo notification
+            showUndoNotification(`Undone: ${lastAction.action}`);
+        }
+        
+        function performRedo() {
+            if (redoStack.length === 0) {
+                showToast('Nothing to redo', 'var(--text2)');
+                return;
+            }
+            
+            const nextState = redoStack.pop();
+            
+            // Save current state for undo
+            const currentState = {
+                categories: JSON.parse(JSON.stringify(state.categories)),
+                transactions: JSON.parse(JSON.stringify(state.transactions)),
+                tabs: JSON.parse(JSON.stringify(state.tabs)),
+                nwItems: JSON.parse(JSON.stringify(state.nwItems)),
+                fi: JSON.parse(JSON.stringify(state.fi || {})),
+                settings: JSON.parse(JSON.stringify(state.settings || {}))
+            };
+            undoStack.push({
+                snapshot: currentState,
+                action: 'Redo'
+            });
+            
+            // Restore next state
+            state.categories = JSON.parse(JSON.stringify(nextState.snapshot.categories));
+            state.transactions = JSON.parse(JSON.stringify(nextState.snapshot.transactions));
+            state.tabs = JSON.parse(JSON.stringify(nextState.snapshot.tabs));
+            state.nwItems = JSON.parse(JSON.stringify(nextState.snapshot.nwItems));
+            state.fi = JSON.parse(JSON.stringify(nextState.snapshot.fi));
+            state.settings = JSON.parse(JSON.stringify(nextState.snapshot.settings));
+            
+            save();
+            render();
+            renderCharts();
+            
+            showUndoNotification(`Redone: ${nextState.action}`);
+        }
+        
+        function showUndoNotification(message) {
+            const el = document.getElementById('toast');
+            clearTimeout(toastTimer);
+            el.className = 'toast-undo';
+            el.textContent = message;
+            el.style.background = 'linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%)';
+            el.style.display = 'block';
+            el.style.boxShadow = '0 4px 20px rgba(45, 66, 56, 0.3)';
+            el.style.transform = 'translateY(-10px)';
+            el.style.transition = 'all 0.3s ease';
+            
+            setTimeout(() => {
+                el.style.transform = 'translateY(0)';
+            }, 10);
+            
+            toastTimer = setTimeout(() => {
+                el.style.opacity = '0';
+                setTimeout(() => el.style.display = 'none', 300);
+            }, 3500);
+        }
+        
+        // Keyboard shortcut for undo (Ctrl+Z)
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    performRedo();
+                } else {
+                    performUndo();
+                }
+            }
+        });
 
         function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
@@ -3714,7 +3848,10 @@ function toggleTxnNote(id) {
         }
 
         function deleteCategory(id) {
+            const cat = state.categories.find(c => c.id === id);
+            if (!cat) return;
             showConfirmToast('Delete this category? Prior month transactions will be kept as uncategorized.', () => {
+                pushUndoState(`Deleted category "${cat.name}"`);
                 state.transactions.forEach(t => { if (t.catId == id) t.catId = ''; });
                 state.categories = state.categories.filter(c => c.id !== id);
                 save();
@@ -3734,6 +3871,7 @@ function toggleTxnNote(id) {
     if (!desc) { showToast('Enter a description.', 'var(--danger)'); return; }
     if (isNaN(amt) || amt <= 0) { showToast('Enter a valid amount.', 'var(--danger)'); return; }
 
+    pushUndoState(`Added transaction "${desc}"`);
     state.transactions.unshift({ id: Date.now(), desc, catId: catId || '', amt, date, type: flow, note });
 
     document.getElementById('txn-desc').value = '';
@@ -3754,6 +3892,7 @@ function saveQuickAddTxn(catId) {
     if (!desc) { showToast('Enter a description.', 'var(--danger)'); return; }
     if (isNaN(amt) || amt <= 0) { showToast('Enter a valid amount.', 'var(--danger)'); return; }
 
+    pushUndoState(`Added quick transaction "${desc}"`);
     state.transactions.unshift({ id: Date.now(), desc, catId: catId, amt, date, type: flow, note });
     openQuickAdds.delete(catId);
     save();
@@ -3781,6 +3920,17 @@ function saveEditTransaction() {
     const id = parseInt(document.getElementById('txn-edit-id').value);
     const t = state.transactions.find(t => t.id === id);
     if (!t) return;
+    
+    // Capture old values for undo
+    const oldDesc = t.desc;
+    const oldNote = t.note;
+    const oldAmt = t.amt;
+    const oldType = t.type;
+    const oldDate = t.date;
+    const oldCatId = t.catId;
+    
+    pushUndoState(`Edited transaction "${oldDesc}"`);
+    
     t.desc = document.getElementById('txn-edit-desc').value.trim();
     t.note = document.getElementById('txn-edit-note').value.trim();
     t.amt = parseFloat(document.getElementById('txn-edit-amt').value) || 0;
@@ -3798,6 +3948,7 @@ function saveEditTransaction() {
             const txn = state.transactions.find(t => t.id === id);
             if (!txn) return;
             showConfirmToast(`Delete "${txn.desc}"?`, () => {
+                pushUndoState(`Deleted transaction "${txn.desc}"`);
                 state.transactions = state.transactions.filter(t => t.id !== id);
                 save();
                 render();
@@ -4224,25 +4375,37 @@ function saveEditTransaction() {
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (!line || line.startsWith('#') || line.startsWith('Key/Guide')) continue;
-                const p = parseCSVLine(line);
-                if (p.length < 4 || p[0].trim().toLowerCase() !== 'transaction') continue;
+                try {
+                    const p = parseCSVLine(line);
+                    if (p.length < 4 || p[0].trim().toLowerCase() !== 'transaction') continue;
 
-                const desc = p[1].trim();
-                const amt = parseFloat(p[2]);
-                const date = (p[3] || '').trim() === 'N/A' ? todayISO() : (p[3] || todayISO()).trim();
-                const catName = (p[4] || '').trim();
-                const flow = (p[7] || 'outflow').trim();
-                if (!desc || isNaN(amt)) continue;
+                    const desc = p[1].trim();
+                    const amt = parseFloat(p[2]);
+                    const date = (p[3] || '').trim() === 'N/A' ? todayISO() : (p[3] || todayISO()).trim();
+                    const catName = (p[4] || '').trim();
+                    const flow = (p[7] || 'outflow').trim();
+                    if (!desc || isNaN(amt)) continue;
 
-                let cat = state.categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
-                if (!cat && catName) {
-                    cat = { id: Date.now() + i + 9000, name: catName, type: 'expense', allocations: {}, period: 'monthly', balance: 0 };
-                    state.categories.push(cat);
-                }
+                    let cat = state.categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+                    if (!cat && catName) {
+                        // Default to expense type, never income
+                        cat = { id: Date.now() + i + 9000, name: catName, type: 'expense', allocations: {}, period: 'monthly', balance: 0 };
+                        state.categories.push(cat);
+                    }
+                    
+                    // Prevent assigning transactions to income categories
+                    if (cat && cat.type === 'income') {
+                        // Skip this transaction or assign to no category
+                        cat = null;
+                    }
 
-                const exists = state.transactions.some(t => t.desc === desc && t.amt === amt && t.date === date && t.type === flow);
-                if (mode === 'replace' || !exists) {
-                    state.transactions.unshift({ id: Date.now() + i + 20000, desc, catId: cat ? cat.id : '', amt, date, type: flow });
+                    const exists = state.transactions.some(t => t.desc === desc && t.amt === amt && t.date === date && t.type === flow);
+                    if (mode === 'replace' || !exists) {
+                        state.transactions.unshift({ id: Date.now() + i + 20000, desc, catId: cat ? cat.id : '', amt, date, type: flow });
+                    }
+                } catch (e) {
+                    // Ignore failed rows and continue with import
+                    console.warn('Skipping malformed CSV row:', line, e);
                 }
             }
 
