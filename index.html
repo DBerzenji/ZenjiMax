@@ -1426,13 +1426,17 @@ textarea {
                 <div class="hstat-label">Income</div>
                 <div class="hstat-val" id="h-income" style="color:var(--income)">$0</div>
             </div>
-            <div class="hstat">
+            <div class="hstat" id="h-unassigned-container">
                 <div class="hstat-label">Unassigned</div>
                 <div class="hstat-val" id="h-unassigned">$0</div>
             </div>
-            <div class="hstat">
-                <div class="hstat-label">Spent</div>
+            <div class="hstat" id="h-spent-container" style="cursor:pointer;" onclick="cycleSpentDisplay()">
+                <div class="hstat-label" id="h-spent-label">Spent</div>
                 <div class="hstat-val" id="h-left-to-spend">$0</div>
+            </div>
+            <div class="hstat" id="h-savings-container" style="cursor:pointer;display:none;" onclick="cycleSavingsDisplay()">
+                <div class="hstat-label" id="h-savings-label">Savings</div>
+                <div class="hstat-val" id="h-savings">$0</div>
             </div>
         </div>
         <div class="header-actions">
@@ -2373,6 +2377,13 @@ function restoreTabDateState(tabId) {
             save();
         }
 
+        if (!state.settings) {
+            state.settings = {
+                showSavingsInHeader: false
+            };
+            save();
+        }
+
         let currentTabId = 'budget';
 
         // Clean up old state fields and ensure allocations exist
@@ -2855,7 +2866,18 @@ function toggleTxnNote(id) {
 
         function isMonthBlank(y, m) {
             const key = monthKey(y, m);
-            return !state.categories.some(c => c.allocations && c.allocations[key] !== undefined);
+            // Check if any category has allocations for this month OR if there are any transactions in this month
+            const hasAllocations = state.categories.some(c => c.allocations && c.allocations[key] !== undefined);
+            if (hasAllocations) return false;
+            
+            // Check for transactions in this month
+            const monthStart = new Date(y, m, 1);
+            const monthEnd = new Date(y, m + 1, 0);
+            const hasTransactions = state.transactions.some(t => {
+                const txnDate = new Date(t.date);
+                return txnDate >= monthStart && txnDate <= monthEnd;
+            });
+            return !hasTransactions;
         }
 
         function copyBudget(fromY, fromM, toY, toM, copyPrevious = true) {
@@ -3103,23 +3125,116 @@ function toggleTxnNote(id) {
         }
 
         // ─── HEADER STATS ────────────────────────────────────────────────────
+        let spentDisplayCycle = 0; // 0: Spent, 1: Living Expenses, 2: Sinking Fund Purchases, 3: Spent (Living + Savings)
+        let savingsDisplayCycle = 0; // 0: Savings Planned, 1: Saved
+        
+        function cycleSpentDisplay() {
+            spentDisplayCycle = (spentDisplayCycle + 1) % 4;
+            renderHeader(currentTotalIncomeTs || 0, currentTotalAllocatedTs || 0, currentNetSpent || 0);
+        }
+        
+        function cycleSavingsDisplay() {
+            savingsDisplayCycle = (savingsDisplayCycle + 1) % 2;
+            renderHeader(currentTotalIncomeTs || 0, currentTotalAllocatedTs || 0, currentNetSpent || 0);
+        }
+        
+        let currentTotalIncomeTs = 0;
+        let currentTotalAllocatedTs = 0;
+        let currentNetSpent = 0;
+        
         function renderHeader(totalIncomeTs, totalAllocatedTs, netSpent) {
+            currentTotalIncomeTs = totalIncomeTs;
+            currentTotalAllocatedTs = totalAllocatedTs;
+            currentNetSpent = netSpent;
+            
             const unassigned = totalIncomeTs - totalAllocatedTs;
             document.getElementById('h-income').textContent = fmt(totalIncomeTs);
+            
+            // Hide Unassigned if zero
+            const uContainer = document.getElementById('h-unassigned-container');
             const uEl = document.getElementById('h-unassigned');
             if (Math.abs(unassigned) < 0.005) {
-                uEl.textContent = '$0.00';
-                uEl.style.color = 'var(--accent)';
-            } else if (unassigned > 0) {
-                uEl.textContent = fmt(unassigned);
-                uEl.style.color = 'var(--warn)';
+                uContainer.style.display = 'none';
             } else {
-                uEl.textContent = '–' + fmt(Math.abs(unassigned));
-                uEl.style.color = 'var(--danger)';
+                uContainer.style.display = 'flex';
+                if (unassigned > 0) {
+                    uEl.textContent = fmt(unassigned);
+                    uEl.style.color = 'var(--warn)';
+                } else {
+                    uEl.textContent = '–' + fmt(Math.abs(unassigned));
+                    uEl.style.color = 'var(--danger)';
+                }
             }
-            const sEl = document.getElementById('h-left-to-spend');
-            sEl.textContent = (netSpent < 0 ? '–' : '') + fmt(Math.abs(netSpent));
-            sEl.style.color = netSpent > 0 ? 'var(--danger)' : 'var(--accent)';
+            
+            // Calculate living expenses and sinking fund purchases
+            const ts = getTimescale();
+            const periodEnd = getPeriodEnd(currentPeriodStart, ts);
+            const expenseCats = state.categories.filter(c => c.type === 'expense');
+            const sinkCats = state.categories.filter(c => c.type === 'sinking');
+            
+            const livingExpenses = expenseCats.reduce((sum, cat) => {
+                return sum + getSpentInPeriod(cat.id, currentPeriodStart, periodEnd);
+            }, 0);
+            
+            const sinkingPurchases = sinkCats.reduce((sum, cat) => {
+                return sum + getSpentInPeriod(cat.id, currentPeriodStart, periodEnd);
+            }, 0);
+            
+            // Update Spent display based on cycle
+            const spentLabel = document.getElementById('h-spent-label');
+            const spentVal = document.getElementById('h-left-to-spend');
+            
+            if (spentDisplayCycle === 0) {
+                // Spent (total)
+                spentLabel.textContent = 'Spent';
+                spentVal.textContent = (netSpent < 0 ? '–' : '') + fmt(Math.abs(netSpent));
+                spentVal.style.color = netSpent > 0 ? 'var(--danger)' : 'var(--accent)';
+            } else if (spentDisplayCycle === 1) {
+                // Living Expenses
+                spentLabel.textContent = 'Living Expenses';
+                spentVal.textContent = fmt(livingExpenses);
+                spentVal.style.color = 'var(--text)';
+            } else if (spentDisplayCycle === 2) {
+                // Sinking Fund Purchases
+                spentLabel.textContent = 'Sinking Fund Purchases';
+                spentVal.textContent = fmt(sinkingPurchases);
+                spentVal.style.color = 'var(--sinking)';
+            } else if (spentDisplayCycle === 3) {
+                // Spent (Living + Savings)
+                spentLabel.textContent = 'Spent (Living + Savings)';
+                const total = livingExpenses + sinkingPurchases;
+                spentVal.textContent = fmt(total);
+                spentVal.style.color = 'var(--text)';
+            }
+            
+            // Update Savings display if enabled
+            const savingsContainer = document.getElementById('h-savings-container');
+            const showSavings = state.settings && state.settings.showSavingsInHeader;
+            
+            if (showSavings) {
+                savingsContainer.style.display = 'flex';
+                const savingsLabel = document.getElementById('h-savings-label');
+                const savingsVal = document.getElementById('h-savings');
+                
+                const sinkingAllocated = sinkCats.reduce((sum, cat) => {
+                    return sum + catAllocForTs(cat, currentYear, currentMonth, ts, currentPeriodStart);
+                }, 0);
+                
+                const sinkingBalance = sinkCats.reduce((sum, cat) => {
+                    return sum + getSinkingCurrentBalance(cat, isoDate(periodEnd));
+                }, 0);
+                
+                if (savingsDisplayCycle === 0) {
+                    savingsLabel.textContent = 'Savings Planned';
+                    savingsVal.textContent = fmt(sinkingAllocated);
+                } else {
+                    savingsLabel.textContent = 'Saved';
+                    savingsVal.textContent = fmt(sinkingBalance);
+                }
+                savingsVal.style.color = 'var(--income)';
+            } else {
+                savingsContainer.style.display = 'none';
+            }
         }
 
         // ─── BUDGET VIEW ─────────────────────────────────────────────────────
