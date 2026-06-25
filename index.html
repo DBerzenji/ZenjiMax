@@ -902,6 +902,20 @@ textarea {
             word-break: break-word;
         }
 
+        #toast.toast-undo {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%) !important;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            box-shadow: 0 6px 24px rgba(40, 60, 45, 0.3);
+            animation: toastUndoPulse 0.4s ease-out;
+        }
+
+        @keyframes toastUndoPulse {
+            0% { transform: translateX(-50%) scale(0.9); opacity: 0; }
+            50% { transform: translateX(-50%) scale(1.05); opacity: 1; }
+            100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        }
+
         /* ── EMPTY STATE ─────────────────────────────── */
         .empty-state {
             text-align: center;
@@ -1438,6 +1452,7 @@ textarea {
                 <div class="hstat-label" id="h-savings-label">Savings</div>
                 <div class="hstat-val" id="h-savings">$0</div>
             </div>
+            <button class="btn-sm solid" onclick="copyPriorMonthAllocations()" title="Copy prior month's allocations to current period" style="min-width:60px;">⧉ Copy Prior</button>
         </div>
         <div class="header-actions" style="display:flex;gap:8px;align-items:center;">
             <button class="btn-sm solid" onclick="performUndo()" title="Undo (Ctrl+Z)" style="min-width:60px;">↶ Undo</button>
@@ -1924,6 +1939,12 @@ textarea {
             <div id="tab-manager-list"
                 style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px; max-height:280px; overflow-y:auto; padding-right:4px;">
                 <!-- Filled Dynamically -->
+            </div>
+
+            <div class="section-label" style="margin-top:12px;">Header Options</div>
+            <div style="display:flex; align-items:center; gap:8px; background:var(--surface); padding:8px 12px; border-radius:8px; margin-top:8px;">
+                <input type="checkbox" id="show-savings-header-toggle" onchange="toggleShowSavingsInHeader()" style="width:16px; height:16px; cursor:pointer; margin:0;">
+                <label for="show-savings-header-toggle" style="flex:1; font-size:0.85rem; cursor:pointer;">Show Savings in Header</label>
             </div>
 
             <div class="section-label" style="margin-top:12px;">Add Custom Dashboard Page</div>
@@ -3259,7 +3280,7 @@ function toggleTxnNote(id) {
         }
 
         // ─── HEADER STATS ────────────────────────────────────────────────────
-        let spentDisplayCycle = 0; // 0: Spent, 1: Living Expenses, 2: Sinking Fund Purchases, 3: Spent (Living + Savings)
+        let spentDisplayCycle = 0; // 0: Spent, 1: Expenses, 2: Savings Withdrawals, 3: Expenses & Withdrawals
         let savingsDisplayCycle = 0; // 0: Savings Planned, 1: Saved
         
         function cycleSpentDisplay() {
@@ -3324,18 +3345,18 @@ function toggleTxnNote(id) {
                 spentVal.textContent = (netSpent < 0 ? '–' : '') + fmt(Math.abs(netSpent));
                 spentVal.style.color = netSpent > 0 ? 'var(--danger)' : 'var(--accent)';
             } else if (spentDisplayCycle === 1) {
-                // Living Expenses
-                spentLabel.textContent = 'Living Expenses';
+                // Expenses
+                spentLabel.textContent = 'Expenses';
                 spentVal.textContent = fmt(livingExpenses);
                 spentVal.style.color = 'var(--text)';
             } else if (spentDisplayCycle === 2) {
-                // Sinking Fund Purchases
-                spentLabel.textContent = 'Sinking Fund Purchases';
+                // Savings Withdrawals
+                spentLabel.textContent = 'Savings Withdrawals';
                 spentVal.textContent = fmt(sinkingPurchases);
                 spentVal.style.color = 'var(--sinking)';
             } else if (spentDisplayCycle === 3) {
-                // Spent (Living + Savings)
-                spentLabel.textContent = 'Spent (Living + Savings)';
+                // Expenses & Withdrawals
+                spentLabel.textContent = 'Expenses & Withdrawals';
                 const total = livingExpenses + sinkingPurchases;
                 spentVal.textContent = fmt(total);
                 spentVal.style.color = 'var(--text)';
@@ -5271,6 +5292,20 @@ function saveEditTransaction() {
                     </div>
                 `;
             }).join('');
+            
+            // Update the Show Savings in Header checkbox
+            const savingsToggle = document.getElementById('show-savings-header-toggle');
+            if (savingsToggle) {
+                savingsToggle.checked = !!(state.settings && state.settings.showSavingsInHeader);
+            }
+        }
+
+        function toggleShowSavingsInHeader() {
+            if (!state.settings) state.settings = {};
+            state.settings.showSavingsInHeader = !state.settings.showSavingsInHeader;
+            save();
+            renderHeader(currentTotalIncomeTs || 0, currentTotalAllocatedTs || 0, currentNetSpent || 0);
+            showToast(state.settings.showSavingsInHeader ? 'Savings display enabled in header' : 'Savings display disabled in header', 'var(--accent)');
         }
 
         function renameTab(tabId, newLabel) {
